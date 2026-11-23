@@ -53,6 +53,9 @@ from tap_exact.streams import (
     WarehouseTransfersStream,
     WarehouseTransferLinesStream,
     JournalStatusStream,
+    ReportingBalanceStream,
+    DocumentsStream,
+    DocumentAttachmentsStream,
 )
 
 STREAM_TYPES = [
@@ -103,6 +106,9 @@ STREAM_TYPES = [
     WarehouseTransfersStream,
     WarehouseTransferLinesStream,
     JournalStatusStream,
+    ReportingBalanceStream,
+    DocumentsStream,
+    DocumentAttachmentsStream,
 ]
 
 DISPLAY_ONLY_STREAM_NAMES = [
@@ -139,7 +145,9 @@ class TapExact(Tap):
         parse_env_config=False,
         validate_config=True,
     ) -> None:
-        self.config_file = config[0]
+        self.config_file = (
+            config[0] if isinstance(config, (list, tuple)) and config else None
+        )
         super().__init__(config, catalog, state, parse_env_config, validate_config)
 
     @classmethod
@@ -166,6 +174,7 @@ class TapExact(Tap):
         th.Property("client_id", th.StringType, required=True),
         th.Property("client_secret", th.StringType, required=True),
         th.Property("current_division", th.StringType, required=True),
+        th.Property("webshop_uuid", th.StringType, required=False),
     ).to_dict()
 
     def discover_streams(self) -> List[Stream]:

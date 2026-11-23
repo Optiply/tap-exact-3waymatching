@@ -39,6 +39,9 @@ class ExactStream(RESTStream):
             self.default_warehouse_uuid
         else:
             self._tap.warehouse_uuid = self.config.get("warehouse_uuid")
+        # Optiply: every stream exposes an `optiply_webshop_uuid` column,
+        # populated from `webshop_uuid` in config (null when absent).
+        self._add_optiply_webshop_uuid_to_schema()
 
     dont_use_current_division = False
     default_rep_key_field = "Modified"
@@ -307,6 +310,34 @@ class ExactStream(RESTStream):
         elif 400 <= response.status_code < 500:
             msg = self.response_error_message(response)
             raise FatalAPIError(f"{msg} with response {response.text}")
+
+    def _add_optiply_webshop_uuid_to_schema(self) -> None:
+        """Add the `optiply_webshop_uuid` property to this stream's schema.
+
+        `schema` is a class attribute shared between instances, so a patched
+        copy is assigned to the instance instead of mutating it in place.
+        """
+        schema = self.schema
+        if not isinstance(schema, dict):
+            return
+        if "optiply_webshop_uuid" in (schema.get("properties") or {}):
+            return
+        patched = dict(schema)
+        patched["properties"] = {
+            **(schema.get("properties") or {}),
+            "optiply_webshop_uuid": {"type": ["string", "null"]},
+        }
+        try:
+            self.schema = patched  # type: ignore[misc]
+        except AttributeError:
+            # `schema` resolved to the SDK's read-only property
+            self._schema = patched
+
+    def _write_record_message(self, record: dict) -> None:
+        # Optiply: stamp every record (parent and child streams) with the
+        # configured webshop uuid, or null when not configured.
+        record["optiply_webshop_uuid"] = self.config.get("webshop_uuid")
+        super()._write_record_message(record)
 
     def _write_state_message(self) -> None:
         """Write out a STATE message with the latest state."""

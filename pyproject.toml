@@ -39,3 +39,4 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 # CLI declaration
 tap-exact = 'tap_exact.tap:TapExact.cli'
+tap-exact_3waymatching = 'tap_exact.tap:TapExact.cli'

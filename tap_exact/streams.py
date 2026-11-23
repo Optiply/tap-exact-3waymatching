@@ -2954,3 +2954,155 @@ class JournalStatusStream(ExactStream):
         th.Property("Status", th.StringType),
         th.Property("StatusDescription", th.StringType),
     ).to_dict()
+
+
+# --- Optiply 3-way matching streams ---
+
+
+class ReportingBalanceStream(ExactStream):
+    name = "reporting_balance"
+    primary_keys = ["ID"]
+
+    schema = th.PropertiesList(
+        th.Property("ID", th.StringType),
+        th.Property("Amount", th.CustomType({"type": ["number", "string"]})),
+        th.Property(
+            "AmountCredit", th.CustomType({"type": ["number", "string"]})
+        ),
+        th.Property(
+            "AmountDebit", th.CustomType({"type": ["number", "string"]})
+        ),
+        th.Property("BalanceType", th.StringType),
+        th.Property("CostCenterCode", th.StringType),
+        th.Property("CostCenterDescription", th.StringType),
+        th.Property("CostUnitCode", th.StringType),
+        th.Property("CostUnitDescription", th.StringType),
+        th.Property("Count", th.CustomType({"type": ["number", "string"]})),
+        th.Property("Division", th.CustomType({"type": ["number", "string"]})),
+        th.Property("GLAccount", th.StringType),
+        th.Property("GLAccountCode", th.StringType),
+        th.Property("GLAccountDescription", th.StringType),
+        th.Property(
+            "ReportingPeriod", th.CustomType({"type": ["number", "string"]})
+        ),
+        th.Property(
+            "ReportingYear", th.CustomType({"type": ["number", "string"]})
+        ),
+        th.Property("Status", th.CustomType({"type": ["number", "string"]})),
+        th.Property("Type", th.CustomType({"type": ["number", "string"]})),
+    ).to_dict()
+
+    @property
+    def path(self):
+        return "/financial/ReportingBalance"
+
+    @property
+    def select(self):
+        return (
+            "ID,Amount,AmountCredit,AmountDebit,BalanceType,CostCenterCode,"
+            "CostCenterDescription,CostUnitCode,CostUnitDescription,Count,Division,"
+            "GLAccount,GLAccountCode,GLAccountDescription,ReportingPeriod,"
+            "ReportingYear,Status,Type"
+        )
+
+    def get_url_params(self, context, next_page_token):
+        params = {"$select": self.select}
+        reporting_year = self.config.get("reporting_balance_reporting_year")
+        if reporting_year:
+            params["$filter"] = f"ReportingYear eq {reporting_year}"
+        if next_page_token:
+            params["$skiptoken"] = next_page_token
+        return params
+
+
+class DocumentsStream(ExactSyncStream):
+    name = "documents"
+    primary_keys = ["ID"]
+    path = "/sync/Documents/Documents"
+    replication_key = "Timestamp"
+
+    schema = th.PropertiesList(
+        th.Property("ID", th.StringType),
+        th.Property("Timestamp", th.StringType),
+        th.Property("Account", th.StringType),
+        th.Property("AccountCode", th.StringType),
+        th.Property("AccountName", th.StringType),
+        th.Property("ActionRegenerateEntryProposal", th.BooleanType),
+        th.Property("AmountFC", th.StringType),
+        th.Property("Body", th.StringType),
+        th.Property("Category", th.StringType),
+        th.Property("CategoryDescription", th.StringType),
+        th.Property("Contact", th.StringType),
+        th.Property("ContactFullName", th.StringType),
+        th.Property("ContractID", th.StringType),
+        th.Property("ContractNumber", th.StringType),
+        th.Property("CostcenterCode", th.StringType),
+        th.Property("CostcenterDescription", th.StringType),
+        th.Property("CostunitCode", th.StringType),
+        th.Property("CostunitDescription", th.StringType),
+        th.Property("Created", th.DateTimeType),
+        th.Property("Creator", th.StringType),
+        th.Property("CreatorFullName", th.StringType),
+        th.Property("Currency", th.StringType),
+        th.Property("Division", th.StringType),
+        th.Property("DocumentDate", th.DateTimeType),
+        th.Property("DocumentFolder", th.StringType),
+        th.Property("DocumentFolderCode", th.StringType),
+        th.Property("DocumentFolderDescription", th.StringType),
+        th.Property("DocumentViewUrl", th.StringType),
+        th.Property("EntryStatusDescription", th.StringType),
+        th.Property("ExpiryDate", th.DateTimeType),
+        th.Property("FinancialTransactionEntryID", th.StringType),
+        th.Property("HasEmptyBody", th.BooleanType),
+        th.Property("HID", th.StringType),
+        th.Property("InheritShare", th.BooleanType),
+        th.Property("Item", th.StringType),
+        th.Property("ItemCode", th.StringType),
+        th.Property("ItemDescription", th.StringType),
+        th.Property("ItemMaterial", th.StringType),
+        th.Property("ItemRoutingStep", th.StringType),
+        th.Property("Language", th.StringType),
+        th.Property("Modified", th.DateTimeType),
+        th.Property("Modifier", th.StringType),
+        th.Property("ModifierFullName", th.StringType),
+        th.Property("Opportunity", th.StringType),
+        th.Property("Project", th.StringType),
+        th.Property("ProjectCode", th.StringType),
+        th.Property("ProjectDescription", th.StringType),
+        th.Property("ProposedEntryStatus", th.StringType),
+        th.Property("SalesInvoiceNumber", th.StringType),
+        th.Property("SalesOrderNumber", th.StringType),
+        th.Property("SendMethod", th.StringType),
+        th.Property("ShopOrderNumber", th.StringType),
+        th.Property("Subject", th.StringType),
+        th.Property("TeamsMeetingId", th.StringType),
+        th.Property("Type", th.StringType),
+        th.Property("TypeDescription", th.StringType),
+    ).to_dict()
+
+    @property
+    def select(self):
+        return "ID,Timestamp,Account,AccountCode,AccountName,ActionRegenerateEntryProposal,AmountFC,Body,Category,CategoryDescription,Contact,ContactFullName,ContractID,ContractNumber,CostcenterCode,CostcenterDescription,CostunitCode,CostunitDescription,Created,Creator,CreatorFullName,Currency,Division,DocumentDate,DocumentFolder,DocumentFolderCode,DocumentFolderDescription,DocumentViewUrl,EntryStatusDescription,ExpiryDate,FinancialTransactionEntryID,HasEmptyBody,HID,InheritShare,Item,ItemCode,ItemDescription,ItemMaterial,ItemRoutingStep,Language,Modified,Modifier,ModifierFullName,Opportunity,Project,ProjectCode,ProjectDescription,ProposedEntryStatus,SalesInvoiceNumber,SalesOrderNumber,SendMethod,ShopOrderNumber,Subject,TeamsMeetingId,Type,TypeDescription"
+
+
+class DocumentAttachmentsStream(ExactSyncStream):
+    name = "document_attachments"
+    primary_keys = ["ID"]
+    path = "/sync/Documents/DocumentAttachments"
+    replication_key = "Timestamp"
+
+    # Note: the "Attachment" (base64) property is always null on the sync
+    # endpoint per Exact docs, so it is not requested. Use "Url" with
+    # &Download=1 appended to fetch the file itself.
+    schema = th.PropertiesList(
+        th.Property("ID", th.StringType),
+        th.Property("Timestamp", th.StringType),
+        th.Property("Document", th.StringType),
+        th.Property("FileName", th.StringType),
+        th.Property("FileSize", th.StringType),
+        th.Property("Url", th.StringType),
+    ).to_dict()
+
+    @property
+    def select(self):
+        return "ID,Timestamp,Document,FileName,FileSize,Url"

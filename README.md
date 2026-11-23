@@ -1,5 +1,9 @@
 # tap-exact
 
+Optiply fork used only on matching.hotglue.optiply.nl (3-way matching).
+Adds an `optiply_webshop_uuid` column to every stream (from the `webshop_uuid` config setting),
+plus the `reporting_balance`, `documents` and `document_attachments` streams.
+
 `tap-exact` is a Singer tap for Exact.
 
 Built with the [Meltano Tap SDK](https://sdk.meltano.com) for Singer Taps.
