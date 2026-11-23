@@ -35,9 +35,10 @@ class ExactStream(RESTStream):
         path: Optional[str] = None,
     ) -> None:
         super().__init__(tap, name=name, schema=schema, path=path)
-        if not self.config.get("warehouse_uuid"):
-            self.default_warehouse_uuid
-        else:
+        # Optiply: resolve the default warehouse lazily (only streams that
+        # filter on it need it), so discovery and the matching streams don't
+        # fail on divisions without a default warehouse.
+        if self.config.get("warehouse_uuid"):
             self._tap.warehouse_uuid = self.config.get("warehouse_uuid")
         # Optiply: every stream exposes an `optiply_webshop_uuid` column,
         # populated from `webshop_uuid` in config (null when absent).
@@ -111,7 +112,10 @@ class ExactStream(RESTStream):
                 json.dump(self._tap._config, outfile, indent=4)
             self._tap.warehouse_uuid = warehouse_uuid
         elif not self.config.get("use_stock_multiple_warehouses", False):
-            raise Exception("There is no default_warehouse_code")
+            # Optiply: don't fail; streams fall back to all warehouses.
+            self.logger.warning(
+                "No default_warehouse_id configured; syncing all warehouses"
+            )
         
     @property
     def sync_endpoint(self):
